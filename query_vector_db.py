@@ -3,9 +3,9 @@ import weaviate
 import json
 
 #In the future, remove duplicates when adding to database
-weaviate_url= "https://conversation-n4hov4ad.weaviate.network" #muddy.tot
+weaviate_url= "https://memorygenie-cydi4kc1.weaviate.network" #muddy.tot
 
-weaviate_key = "tpgdv5P7B43bxH26cgOmIRUCrMJfJrTXXqeT"
+weaviate_key = "WrXrGd8hm9wacKb44xoB93SLMm8mwEqagxL3"
 
 model = SentenceTransformer('all-mpnet-base-v2')
 
@@ -23,7 +23,7 @@ def query_db():
       queryvector = model.encode(query)
       response = (
           client.query
-          .get("Transcript", ["transcript", "answer", "category"])
+          .get("Transcript", ["transcript", "conversation_id"])
           .with_hybrid(
               query=query,
               vector=queryvector
