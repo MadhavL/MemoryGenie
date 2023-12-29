@@ -4,9 +4,9 @@ import os
 import time
 
 #In the future, remove duplicates when adding to database
-weaviate_url= "https://memorygenie-cydi4kc1.weaviate.network" #muddy.tot
+weaviate_url= "https://memorygenie-iwdu90fy.weaviate.network" #muddy.tot
 
-weaviate_key = "WrXrGd8hm9wacKb44xoB93SLMm8mwEqagxL3"
+weaviate_key = "j3MWdO2oqV1Dse4oHuOhVfSWftzkVOqev5LW"
 
 model = SentenceTransformer('all-mpnet-base-v2')
 
@@ -17,8 +17,7 @@ client = weaviate.Client(
 )
 
 #Take in a list of strings, embed/vectorize, and add them to the database
-def update_db(utterances):
-    conv_id = f"{int(time.time())}"
+def update_db(utterances, type, conv_id):
     class_obj = {
         "class": "Transcript",
         "vectorizer": "none",
@@ -37,6 +36,7 @@ def update_db(utterances):
             # Initialize a batch process
             properties = {
                 "conversation_id": conv_id,
+                "type": type,
                 "transcript": utterance,
             }
             batch.add_data_object(

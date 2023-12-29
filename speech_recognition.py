@@ -6,6 +6,7 @@ import sys
 import websockets
 from langchain.text_splitter import RecursiveCharacterTextSplitter
 from update_vector_db import update_db
+import time
 
 from datetime import datetime
 
@@ -94,8 +95,10 @@ async def run(key):
                             del all_transcripts[-1]
 
                             #all_transcripts is the final transcription
+                            conv_id = f"{int(time.time())}"
 
                             final_transcription = '\n'.join(all_transcripts)
+                            update_db([final_transcription], "full", conv_id)
                             chunks=[chunk.page_content for chunk in text_splitter.create_documents([final_transcription])]
                             print('\n')
                             for chunk in chunks:
@@ -103,7 +106,7 @@ async def run(key):
                                 print('\n')
 
                             #chunks is the text we want to embed
-                            update_db(chunks)
+                            update_db(chunks, "sentence", conv_id)
                             
                         await ws.send(json.dumps({"type": "CloseStream"}))
                         print("Closed Deepgram connection, waiting for final transcripts if necessary")
