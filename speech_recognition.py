@@ -7,6 +7,7 @@ import websockets
 from langchain.text_splitter import RecursiveCharacterTextSplitter
 from update_vector_db import update_db
 import time
+from query_vector_db import query_db_with_query as query
 
 from datetime import datetime
 
@@ -38,11 +39,11 @@ def mic_callback(input_data, frame_count, time_info, status_flag):
 
 
 async def run(key):
-    deepgram_url = 'wss://api.deepgram.com/v1/listen?punctuate=true&diarize=true&interim_results=true&model=nova-2&encoding=linear16&sample_rate=16000&endpointing=150'
+    deepgram_url = 'wss://api.deepgram.com/v1/listen?punctuate=true&interim_results=true&model=nova-2&encoding=linear16&sample_rate=16000&endpointing=150'
 
     # Connect to the real-time streaming endpoint, attaching our credentials.
     async with websockets.connect(
-        deepgram_url, extra_headers={"Authorization": "Token 55c148996afae2c820da7699bd598492016434d2"}
+        deepgram_url, extra_headers={"Authorization": f"Token {key}"}
     ) as ws:
         print("Opened Deepgram streaming connection")
 
@@ -67,6 +68,8 @@ async def run(key):
         async def receiver(ws):
             """Print out the messages received from the server."""
             transcript = ""
+            prev = ""
+            prev_time = 0
 
             async for msg in ws:
                 res = json.loads(msg)
@@ -74,19 +77,24 @@ async def run(key):
                     # handle local server messages
                     if res.get("msg"):
                         print(res["msg"])
-                    alternative = (
-                        res.get("channel", {})
-                        .get("alternatives", [{}])[0]
-                    )
+                    alternative = (res.get("channel", {}).get("alternatives", [{}])[0])
                     transcript = alternative.get("transcript", "")
                     if transcript != "":
-                        # speaker = alternative.get("words", [{'speaker': -1}])[-1].get("speaker", -1)
+                        #3 Conditions: 1) > 1s since last query, 2) > 25 characters, 3) > x characters of change
+                        if time.time() - prev_time > 2 and len(transcript) > 25:
+                            query = prev + transcript
+                            prev_time = time.time()
+                            print(f"\nQUERY: {query}\n")
+                        
                         print(f"{transcript}")
                         if res.get("is_final"):
                             if res.get("speech_final"):
-                                # print("FINAL!")
+                                print("FINAL!")
+                                prev = ""
                                 if (transcript[-1] not in '.?!'):
                                     transcript += '.'
+                            else:
+                                prev += transcript + " "
                             all_transcripts.append(transcript)
 
                     # close stream if user says "goodbye"
@@ -98,7 +106,7 @@ async def run(key):
                             conv_id = f"{int(time.time())}"
 
                             final_transcription = '\n'.join(all_transcripts)
-                            update_db([final_transcription], "full", conv_id)
+                            # update_db([final_transcription], "full", conv_id)
                             chunks=[chunk.page_content for chunk in text_splitter.create_documents([final_transcription])]
                             print('\n')
                             for chunk in chunks:
@@ -106,7 +114,7 @@ async def run(key):
                                 print('\n')
 
                             #chunks is the text we want to embed
-                            update_db(chunks, "sentence", conv_id)
+                            # update_db(chunks, "sentence", conv_id)
                             
                         await ws.send(json.dumps({"type": "CloseStream"}))
                         print("Closed Deepgram connection, waiting for final transcripts if necessary")
