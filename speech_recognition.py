@@ -7,7 +7,7 @@ import websockets
 from langchain.text_splitter import RecursiveCharacterTextSplitter
 from update_vector_db import update_db
 import time
-from query_vector_db import query_db_with_query as query
+from query_vector_db import query_db_with_query
 
 from datetime import datetime
 
@@ -80,16 +80,17 @@ async def run(key):
                     alternative = (res.get("channel", {}).get("alternatives", [{}])[0])
                     transcript = alternative.get("transcript", "")
                     if transcript != "":
-                        #3 Conditions: 1) > 1s since last query, 2) > 25 characters, 3) > x characters of change
-                        if time.time() - prev_time > 2 and len(transcript) > 25:
+                        #3 Conditions: 1) > 3s since last query, 2) > 25 characters, 3) > x characters of change
+                        if time.time() - prev_time > 3 and len(transcript) > 25:
                             query = prev + transcript
                             prev_time = time.time()
-                            print(f"\nQUERY: {query}\n")
+                            # print(f"\nQUERY: {query}\n")
+                            query_db_with_query(query)
                         
-                        print(f"{transcript}")
+                        # print(f"{transcript}")
                         if res.get("is_final"):
                             if res.get("speech_final"):
-                                print("FINAL!")
+                                # print("FINAL!")
                                 prev = ""
                                 if (transcript[-1] not in '.?!'):
                                     transcript += '.'
