@@ -10,7 +10,10 @@
 }
 
 .TranscriptText {
-    margin: 2vmin;
+    margin-top: 4vmin;
+    margin-bottom: 4vmin;
+    margin-left: 10vw;
+    margin-right: 10vw;
 }
 
 .App-logo {
