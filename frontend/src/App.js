@@ -1,6 +1,7 @@
 import './App.css';
 import 'bootstrap/dist/css/bootstrap.min.css';
 import Button from 'react-bootstrap/Button';
+import Form from 'react-bootstrap/Form';
 import { useState } from 'react';
 import Highlighter from "react-highlight-words";
 
@@ -13,19 +14,33 @@ function MyButton({recording, onClick}) {
     );
   }
 
+function ConversationSwitch({onClick}) {
+    return (
+        <Form>
+        <Form.Check // prettier-ignore
+            type="switch"
+            id="conversation-switch"
+            label="See relevant conversations"
+            onClick={onClick}
+        />
+        </Form>
+    );
+}
+
 function TranscriptText({transcript}) {
     return (
         <p className="TranscriptText">{transcript}</p>
     )
 }
 
-function ConversationHighlighter({conversation, sentence}) {
+function ConversationHighlighter({conversation, sentence, enabled}) {
     return(
     <Highlighter
         className="TranscriptText"
         searchWords={[sentence]}
         autoEscape={true}
         textToHighlight={conversation}
+        style={{ visibility: enabled ? "visible" : "hidden" }}
     />
     )
 }
@@ -61,6 +76,7 @@ function App() {
     const [transcript, setTranscript] = useState("");
     const [relevantConversation, setRelevantConversation] = useState("");
     const [relevantSentence, setRelevantSentence] = useState("");
+    const [enabled, setEnabled] = useState(0);
     let prev = "";
     let prev_time = 0;
     let query = "";
@@ -73,6 +89,10 @@ function App() {
             stopAudio()
         }
         setRecording((recording + 1) % 2);
+    }
+
+    function switchToggled() {
+        setEnabled((enabled + 1) % 2);
     }
 
     function startStreaming() {
@@ -157,7 +177,8 @@ function App() {
         <div className="App">
             <TranscriptText transcript={transcript}/>
             <MyButton recording={recording} onClick={buttonClick}/>
-            <ConversationHighlighter conversation={relevantConversation} sentence={relevantSentence}/>
+            <ConversationSwitch onClick={switchToggled}/>
+            <ConversationHighlighter conversation={relevantConversation} sentence={relevantSentence} enabled={enabled}/>
         </div>
     );
 }
