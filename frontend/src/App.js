@@ -2,7 +2,7 @@ import './App.css';
 import 'bootstrap/dist/css/bootstrap.min.css';
 import Button from 'react-bootstrap/Button';
 import { useState } from 'react';
-// import Highlighter from "react-highlight-words";
+import Highlighter from "react-highlight-words";
 
 const URL = "http://127.0.0.1:8000" //https://neat-teeth-bet.loca.lt"; //NEED TO REPLACE WITH LOCALTUNNEL URL
 let socket
@@ -16,6 +16,17 @@ function MyButton({recording, onClick}) {
 function TranscriptText({transcript}) {
     return (
         <p className="TranscriptText">{transcript}</p>
+    )
+}
+
+function ConversationHighlighter({conversation, sentence}) {
+    return(
+    <Highlighter
+        className="TranscriptText"
+        searchWords={[sentence]}
+        autoEscape={true}
+        textToHighlight={conversation}
+    />
     )
 }
 
@@ -34,12 +45,7 @@ async function queryDB (text){
             // console.log(Date.now())
             const jsonData = JSON.parse(await request.json());
             // console.log(Date.now())
-            const conversation = jsonData.conversation
-            if (conversation) {
-                const sentences = jsonData.relevant_sentences
-                return conversation
-            }
-            console.log(jsonData)
+            return jsonData
         }
         catch (error) {
             console.error(error);
@@ -48,10 +54,13 @@ async function queryDB (text){
   
 }
 
+
+
 function App() {
     const [recording, setRecording] = useState(0);
     const [transcript, setTranscript] = useState("");
     const [relevantConversation, setRelevantConversation] = useState("");
+    const [relevantSentence, setRelevantSentence] = useState("");
     let prev = "";
     let prev_time = 0;
     let query = "";
@@ -98,7 +107,13 @@ function App() {
                         console.log("QUERY: ", query)
                         //Call to API here
                         const apiResult = await queryDB(query)
-                        setRelevantConversation(apiResult)
+                        console.log(apiResult)
+                        const conversation = apiResult.conversation
+                        if (conversation) {
+                            const sentence = apiResult.relevant_sentences
+                            setRelevantConversation(conversation)
+                            setRelevantSentence(sentence[0])
+                        }
                     }
 
                     if (result.is_final) {
@@ -140,17 +155,9 @@ function App() {
 
     return (
         <div className="App">
-            
-            <p>
-                Speech Recognition test
-            </p>
-            
-            
-            <MyButton recording={recording} onClick={buttonClick}/>
             <TranscriptText transcript={transcript}/>
-            <TranscriptText transcript={relevantConversation}/>
-
-        
+            <MyButton recording={recording} onClick={buttonClick}/>
+            <ConversationHighlighter conversation={relevantConversation} sentence={relevantSentence}/>
         </div>
     );
 }

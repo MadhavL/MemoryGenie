@@ -16,6 +16,11 @@
     margin-right: 10vw;
 }
 
+.HighlightedSentence {
+    margin-top: 4vmin;
+    margin-bottom: 4vmin;
+}
+
 .App-logo {
   height: 40vmin;
   pointer-events: none;
