@@ -2,9 +2,7 @@ import './App.css';
 import 'bootstrap/dist/css/bootstrap.min.css';
 import Button from 'react-bootstrap/Button';
 import { useState } from 'react';
-import Highlighter from "react-highlight-words";
 
-const URL = "http://127.0.0.1:8000" //https://neat-teeth-bet.loca.lt"; //NEED TO REPLACE WITH LOCALTUNNEL URL
 let socket
 
 function MyButton({recording, onClick}) {
@@ -19,39 +17,9 @@ function TranscriptText({transcript}) {
     )
 }
 
-async function queryDB (text){
-    if (text) {
-        try {
-            // console.log(Date.now())
-            let request = await fetch(URL+ "/query/" + text, {
-                method: "get",
-                headers: {
-                    Accept: "application/json",
-                    "Content-Type": "application/json",
-                    "Bypass-Tunnel-Reminder": "anything",
-                }
-            });
-            // console.log(Date.now())
-            const jsonData = JSON.parse(await request.json());
-            // console.log(Date.now())
-            const conversation = jsonData.conversation
-            if (conversation) {
-                const sentences = jsonData.relevant_sentences
-                return conversation
-            }
-            console.log(jsonData)
-        }
-        catch (error) {
-            console.error(error);
-        }
-    }
-  
-}
-
 function App() {
     const [recording, setRecording] = useState(0);
     const [transcript, setTranscript] = useState("");
-    const [relevantConversation, setRelevantConversation] = useState("");
     let prev = "";
     let prev_time = 0;
     let query = "";
@@ -84,7 +52,7 @@ function App() {
               mediaRecorder.start(100)
             }
     
-            socket.onmessage = async (message) => {
+            socket.onmessage = (message) => {
               const result = JSON.parse(message.data)
               if (result.channel) {
                 let transcription = result.channel.alternatives[0].transcript
@@ -97,8 +65,6 @@ function App() {
                         prev_time = Date.now()
                         console.log("QUERY: ", query)
                         //Call to API here
-                        const apiResult = await queryDB(query)
-                        setRelevantConversation(apiResult)
                     }
 
                     if (result.is_final) {
@@ -148,7 +114,6 @@ function App() {
             
             <MyButton recording={recording} onClick={buttonClick}/>
             <TranscriptText transcript={transcript}/>
-            <TranscriptText transcript={relevantConversation}/>
 
         
         </div>
