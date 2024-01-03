@@ -1,6 +1,7 @@
 from sentence_transformers import SentenceTransformer
 import weaviate
 import json
+import time
 
 #In the future, remove duplicates when adding to database
 weaviate_url= "https://memorygenie-iwdu90fy.weaviate.network" #muddy.tot
@@ -79,6 +80,7 @@ def query_db():
         query = input("What are you searching for? (x to exit) ")
 
 def query_db_with_query(query):
+    # print(time.time())
     # nearText = {"concepts": ["macroeconomic policy"]}
     # nearVector = {"vector": model.encode(query)}
     queryvector = model.encode(query)
@@ -101,7 +103,7 @@ def query_db_with_query(query):
     if initial_response:
         full_text = initial_response['data']['Get']['Transcript'][0]['transcript']
         conv_id = initial_response['data']['Get']['Transcript'][0]['conversation_id']
-        print(f"Full text: {full_text}")
+        # print(f"Full text: {full_text}")
         final_response = (
             client.query
             .get("Transcript", ["transcript", "type", "conversation_id"])
@@ -129,13 +131,16 @@ def query_db_with_query(query):
             .with_limit(10)
             .do()
         )
-        print("\nRelevant sentences: ")
+        # print("\nRelevant sentences: ")
         relevant_sentences = final_response['data']['Get']['Transcript']
-        for sentence in relevant_sentences:
-            print(sentence['transcript'])
-            print('\n')
+        # for sentence in relevant_sentences:
+            # print(sentence['transcript'])
+            # print('\n')
+        # print(time.time())
+        return json.dumps({'conversation': full_text, 'relevant_sentences': [sentence['transcript'] for sentence in relevant_sentences]})
     else:
-        print("No results")
+        # print("No results")
+        return json.dumps({'conversation': '', 'relevant_sentences': ''})
 
 if __name__ == "__main__":
   query_db()
