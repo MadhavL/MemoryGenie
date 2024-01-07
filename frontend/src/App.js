@@ -8,7 +8,7 @@ import Highlighter from "react-highlight-words";
 const URL = "http://127.0.0.1:8000" //https://neat-teeth-bet.loca.lt"; //NEED TO REPLACE WITH LOCALTUNNEL URL
 let socket
 let queryModeFlag = 0
-const CONVERSATION_END_TIME = 5000
+const CONVERSATION_END_TIME = 30000
 let savingEnabled = 0;
 
 function MyButton({recording, onClick}) {
@@ -153,6 +153,30 @@ async function query_conversation_to_conversation (text){
                     "Bypass-Tunnel-Reminder": "anything",
                 },
                 body: JSON.stringify({query: text})
+            });
+            const jsonData = JSON.parse(await request.json());
+            return jsonData
+        }
+        catch (error) {
+            console.error(error);
+        }
+    }
+  
+}
+
+async function update_db (text, type, id){
+    if (text) {
+        try {
+            let request = await fetch(URL+ "/update-db/", {
+                method: "post",
+                headers: {
+                    Accept: "application/json",
+                    "Content-Type": "application/json",
+                    "Bypass-Tunnel-Reminder": "anything",
+                },
+                body: JSON.stringify({text: text,
+                    type: type,
+                    id: id})
             });
             const jsonData = JSON.parse(await request.json());
             return jsonData
@@ -318,11 +342,11 @@ function App() {
               console.log("Closed Microphone")
               if (savingEnabled) {
                 console.log("Saving transcript")
-                //conversation
-                //sentences
-                // for (let sent of all_sentences) {
-
-                // }
+                const conv_id = Date.now().toString();
+                update_db(conversation, "full", conv_id)
+                for (let sent of all_sentences) {
+                    update_db(sent, "sentence", conv_id)
+                }
               }
             }
     

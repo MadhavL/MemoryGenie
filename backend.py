@@ -4,12 +4,18 @@ import json
 from query_vector_db import sentence_to_conversation_query, conversation_to_conversation_query, sentence_to_sentence_query
 import time
 from pydantic import BaseModel
+from update_vector_db import update_db
 
 
 # uvicorn backend:app --reload
 # lt --port 8000 --local-host "127.0.0.1" -o --print-requests
 class Query(BaseModel):
     query: str
+
+class Update(BaseModel):
+    text: str
+    type: str
+    id: str
 
 app = FastAPI()
 origins = ["*"]
@@ -32,4 +38,8 @@ def query_conversation_to_conversation(query: Query):
 
 @app.post("/query-sentence-sentence/")
 def query_sentence_to_sentence(query: Query):
-    return sentence_to_sentence_query(query.query) 
+    return sentence_to_sentence_query(query.query)
+
+@app.post("/update-db/")
+def update(update: Update):
+    update_db(update.text, update.type, update.id)
