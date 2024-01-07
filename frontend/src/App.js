@@ -86,7 +86,6 @@ function ConversationHighlighter({conversation, sentence, enabled}) {
 async function query_sentence_to_conversation (text){
     if (text) {
         try {
-            // console.log(Date.now())
             let request = await fetch(URL+ "/query-sentence-conversation/" + text, {
                 method: "get",
                 headers: {
@@ -95,9 +94,49 @@ async function query_sentence_to_conversation (text){
                     "Bypass-Tunnel-Reminder": "anything",
                 }
             });
-            // console.log(Date.now())
             const jsonData = JSON.parse(await request.json());
-            // console.log(Date.now())
+            return jsonData
+        }
+        catch (error) {
+            console.error(error);
+        }
+    }
+  
+}
+
+async function query_sentence_to_sentence (text){
+    if (text) {
+        try {
+            let request = await fetch(URL+ "/query-sentence-sentence/" + text, {
+                method: "get",
+                headers: {
+                    Accept: "application/json",
+                    "Content-Type": "application/json",
+                    "Bypass-Tunnel-Reminder": "anything",
+                }
+            });
+            const jsonData = JSON.parse(await request.json());
+            return jsonData
+        }
+        catch (error) {
+            console.error(error);
+        }
+    }
+  
+}
+
+async function query_conversation_to_conversation (text){
+    if (text) {
+        try {
+            let request = await fetch(URL+ "/query-conversation-conversation/" + text, {
+                method: "get",
+                headers: {
+                    Accept: "application/json",
+                    "Content-Type": "application/json",
+                    "Bypass-Tunnel-Reminder": "anything",
+                }
+            });
+            const jsonData = JSON.parse(await request.json());
             return jsonData
         }
         catch (error) {
@@ -173,6 +212,7 @@ function App() {
                     console.log(queryModeFlag)
                     if (queryModeFlag == 0) {
                         setTranscriptText(sentence)
+
                         if (Date.now() - prev_time > 3000 && transcription.length > 25) {
                             prev_time = Date.now()
                             console.log("QUERY: ", sentence)
@@ -187,11 +227,32 @@ function App() {
                         }
                     }
                     else if (queryModeFlag == 1) {
-                        console.log("FIRED")
                         setTranscriptText(sentence)
+
+                        if (Date.now() - prev_time > 3000 && transcription.length > 25) {
+                            prev_time = Date.now()
+                            console.log("QUERY: ", sentence)
+                            const apiResult = await query_sentence_to_sentence(sentence)
+                            console.log(apiResult)
+                            const sentenceResult = apiResult.relevant_sentences
+                            if (sentenceResult && sentenceResult[0]) {
+                                setRelevantConversation(sentenceResult[0])
+                            }
+                        }
                     }
                     else if (queryModeFlag == 2) {
                         setTranscriptText(conversation)
+
+                        if (Date.now() - prev_time > 3000 && transcription.length > 25) {
+                            prev_time = Date.now()
+                            console.log("QUERY: ", conversation)
+                            const apiResult = await query_conversation_to_conversation(conversation)
+                            console.log(apiResult)
+                            const conversationResult = apiResult.conversation
+                            if (conversationResult) {
+                                setRelevantConversation(conversationResult)
+                            }
+                        }
                     }
 
                     if (result.is_final) {
