@@ -8,6 +8,7 @@ import Highlighter from "react-highlight-words";
 const URL = "http://127.0.0.1:8000" //https://neat-teeth-bet.loca.lt"; //NEED TO REPLACE WITH LOCALTUNNEL URL
 let socket
 let queryModeFlag = 0
+const CONVERSATION_END_TIME = 30000
 
 function MyButton({recording, onClick}) {
     return (
@@ -161,6 +162,7 @@ function App() {
     let conversation = "";
     let sentence = "";
     let prev_conversation = "";
+    let prev_transcription_time = 0;
 
     function buttonClick() {
         if (recording === 0) {
@@ -198,6 +200,7 @@ function App() {
                 }
               })
               mediaRecorder.start(100)
+              prev_transcription_time = Date.now()
             }
     
             socket.onmessage = async (message) => {
@@ -205,6 +208,7 @@ function App() {
               if (result.channel) {
                 let transcription = result.channel.alternatives[0].transcript
                 if (transcription) {
+                    prev_transcription_time = Date.now()
                     console.log(transcription)
                     sentence = prev + transcription
                     conversation = prev_conversation + sentence
@@ -269,6 +273,12 @@ function App() {
                         }
                     }
 
+                }
+                else {
+                    if (Date.now() - prev_transcription_time > CONVERSATION_END_TIME) {
+                        stopAudio();
+                        setRecording(0);
+                    }
                 }
               }
             }
