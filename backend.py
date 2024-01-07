@@ -1,7 +1,7 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 import json
-from query_vector_db import query_db_with_query
+from query_vector_db import sentence_to_conversation_query
 import time
 
 # uvicorn backend:app --reload
@@ -18,7 +18,6 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-@app.get("/query/{query}")
-def query_db(query):
-    # print(time.time())
-    return query_db_with_query(query) 
+@app.get("/query-sentence-conversation/{query}")
+def query_sentence_to_conversation(query):
+    return sentence_to_conversation_query(query) 

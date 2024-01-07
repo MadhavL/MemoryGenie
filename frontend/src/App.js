@@ -7,6 +7,7 @@ import Highlighter from "react-highlight-words";
 
 const URL = "http://127.0.0.1:8000" //https://neat-teeth-bet.loca.lt"; //NEED TO REPLACE WITH LOCALTUNNEL URL
 let socket
+let queryModeFlag = 0
 
 function MyButton({recording, onClick}) {
     return (
@@ -27,9 +28,46 @@ function ConversationSwitch({onClick}) {
     );
 }
 
-function TranscriptText({transcript}) {
+function QueryModeSelector({onChange, mode}) {
     return (
-        <p className="TranscriptText">{transcript}</p>
+      <Form>
+        <Form.Check
+            inline
+            label="Sentence->Conversation"
+            type="radio"
+            name="group1"
+            id="inline-radio-1"
+            checked={mode == 0}
+            onChange={onChange}
+            value={0}
+        />
+        <Form.Check
+            inline
+            label="Sentence->Sentence"
+            type="radio"
+            name="group1"
+            id="inline-radio-2"
+            checked={mode == 1}
+            onChange={onChange}
+            value={1}
+        />
+        <Form.Check
+            inline
+            label="Conversation->Conversation"
+            type="radio"
+            name="group1"
+            id="inline-radio-3"
+            checked={mode == 2}
+            onChange={onChange}
+            value={2}
+        />
+      </Form>
+    );
+  }
+
+function TranscriptText({transcriptText}) {
+    return (
+        <p className="TranscriptText">{transcriptText}</p>
     )
 }
 
@@ -45,11 +83,11 @@ function ConversationHighlighter({conversation, sentence, enabled}) {
     )
 }
 
-async function queryDB (text){
+async function query_sentence_to_conversation (text){
     if (text) {
         try {
             // console.log(Date.now())
-            let request = await fetch(URL+ "/query/" + text, {
+            let request = await fetch(URL+ "/query-sentence-conversation/" + text, {
                 method: "get",
                 headers: {
                     Accept: "application/json",
@@ -73,13 +111,17 @@ async function queryDB (text){
 
 function App() {
     const [recording, setRecording] = useState(0);
-    const [transcript, setTranscript] = useState("");
+    const [transcriptText, setTranscriptText] = useState("");
     const [relevantConversation, setRelevantConversation] = useState("");
     const [relevantSentence, setRelevantSentence] = useState("");
     const [enabled, setEnabled] = useState(0);
+    const [queryMode, setQueryMode] = useState(0);
     let prev = "";
     let prev_time = 0;
     let query = "";
+    let conversation = "";
+    let sentence = "";
+    let prev_conversation = "";
 
     function buttonClick() {
         if (recording === 0) {
@@ -95,8 +137,14 @@ function App() {
         setEnabled((enabled + 1) % 2);
     }
 
+    function modeChange(event) {
+        queryModeFlag = event.target.value
+        setQueryMode(event.target.value)
+    }
+
     function startStreaming() {
         navigator.mediaDevices.getUserMedia({ audio: true }).then(stream => {
+            
             const mediaRecorder = new MediaRecorder(stream)
             console.log("Opened Microphone")
     
@@ -119,29 +167,41 @@ function App() {
                 let transcription = result.channel.alternatives[0].transcript
                 if (transcription) {
                     console.log(transcription)
-                    setTranscript(prev + transcription)
+                    sentence = prev + transcription
+                    conversation = prev_conversation + sentence
 
-                    if (Date.now() - prev_time > 3000 && transcription.length > 25) {
-                        query = prev + transcription
-                        prev_time = Date.now()
-                        console.log("QUERY: ", query)
-                        //Call to API here
-                        const apiResult = await queryDB(query)
-                        console.log(apiResult)
-                        const conversation = apiResult.conversation
-                        if (conversation) {
-                            const sentence = apiResult.relevant_sentences
-                            setRelevantConversation(conversation)
-                            setRelevantSentence(sentence[0])
+                    console.log(queryModeFlag)
+                    if (queryModeFlag == 0) {
+                        setTranscriptText(sentence)
+                        if (Date.now() - prev_time > 3000 && transcription.length > 25) {
+                            prev_time = Date.now()
+                            console.log("QUERY: ", sentence)
+                            const apiResult = await query_sentence_to_conversation(sentence)
+                            console.log(apiResult)
+                            const conversationResult = apiResult.conversation
+                            if (conversationResult) {
+                                const sentenceResult = apiResult.relevant_sentences
+                                setRelevantConversation(conversationResult)
+                                setRelevantSentence(sentenceResult[0])
+                            }
                         }
+                    }
+                    else if (queryModeFlag == 1) {
+                        console.log("FIRED")
+                        setTranscriptText(sentence)
+                    }
+                    else if (queryModeFlag == 2) {
+                        setTranscriptText(conversation)
                     }
 
                     if (result.is_final) {
                         if (result.speech_final) {
+                            prev_conversation += sentence
                             prev = ""
                             if (!transcription.match(/[\.!?]$/)) {
-                                transcription += '.'
+                                prev_conversation += '.'
                             }
+                            prev_conversation += " "                          
                         }
                         else {
                             prev += transcription + " "
@@ -175,9 +235,10 @@ function App() {
 
     return (
         <div className="App">
-            <TranscriptText transcript={transcript}/>
+            <TranscriptText transcriptText={transcriptText}/>
             <MyButton recording={recording} onClick={buttonClick}/>
             <ConversationSwitch onClick={switchToggled}/>
+            <QueryModeSelector onChange={modeChange} mode={queryMode}/>
             <ConversationHighlighter conversation={relevantConversation} sentence={relevantSentence} enabled={enabled}/>
         </div>
     );

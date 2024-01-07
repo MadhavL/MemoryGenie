@@ -16,73 +16,7 @@ client = weaviate.Client(
     timeout_config=500
 )
 
-def query_db():
-    query = input("What are you searching for? (x to exit) ")
-    while (query != 'x'):
-        # nearText = {"concepts": ["macroeconomic policy"]}
-        # nearVector = {"vector": model.encode(query)}
-        queryvector = model.encode(query)
-        initial_response = (
-            client.query
-            .get("Transcript", ["transcript", "type", "conversation_id"])
-            .with_where({
-                "path": ["type"],
-                "operator": "Equal",
-                "valueString": "full"
-            })
-            .with_hybrid(
-                query=query,
-                vector=queryvector
-                )
-            .with_limit(10)
-            .do()
-        )
-        #   print(json.dumps(initial_response, indent=4))
-        if initial_response:
-            full_text = initial_response['data']['Get']['Transcript'][0]['transcript']
-            conv_id = initial_response['data']['Get']['Transcript'][0]['conversation_id']
-            print(f"Full text: {full_text}")
-            final_response = (
-                client.query
-                .get("Transcript", ["transcript", "type", "conversation_id"])
-                .with_where({
-                    "operator": "And",
-                    "operands": [
-                        {
-                        "path": ["type"],
-                        "operator": "Equal",
-                        "valueString": "sentence"
-                        },
-                        {
-                        "path": ["conversation_id"],
-                        "operator": "Equal",
-                        "valueText": conv_id
-                        }
-
-                    ]
-                    
-                })
-                .with_hybrid(
-                    query=query,
-                    vector=queryvector
-                    )
-                .with_limit(10)
-                .do()
-            )
-            print("\nRelevant sentences: ")
-            relevant_sentences = final_response['data']['Get']['Transcript']
-            for sentence in relevant_sentences:
-                print(sentence['transcript'])
-                print('\n')
-        else:
-            print("No results")
-
-        query = input("What are you searching for? (x to exit) ")
-
-def query_db_with_query(query):
-    # print(time.time())
-    # nearText = {"concepts": ["macroeconomic policy"]}
-    # nearVector = {"vector": model.encode(query)}
+def sentence_to_conversation_query(query):
     queryvector = model.encode(query)
     initial_response = (
         client.query
@@ -99,11 +33,10 @@ def query_db_with_query(query):
         .with_limit(10)
         .do()
     )
-    #   print(json.dumps(initial_response, indent=4))
+
     if initial_response:
         full_text = initial_response['data']['Get']['Transcript'][0]['transcript']
         conv_id = initial_response['data']['Get']['Transcript'][0]['conversation_id']
-        # print(f"Full text: {full_text}")
         final_response = (
             client.query
             .get("Transcript", ["transcript", "type", "conversation_id"])
@@ -131,16 +64,53 @@ def query_db_with_query(query):
             .with_limit(10)
             .do()
         )
-        # print("\nRelevant sentences: ")
         relevant_sentences = final_response['data']['Get']['Transcript']
-        # for sentence in relevant_sentences:
-            # print(sentence['transcript'])
-            # print('\n')
-        # print(time.time())
         return json.dumps({'conversation': full_text, 'relevant_sentences': [sentence['transcript'] for sentence in relevant_sentences]})
     else:
-        # print("No results")
         return json.dumps({'conversation': '', 'relevant_sentences': ''})
-
-if __name__ == "__main__":
-  query_db()
+    
+def sentence_to_sentence_query(query):
+    queryvector = model.encode(query)
+    initial_response = (
+        client.query
+        .get("Transcript", ["transcript", "type", "conversation_id"])
+        .with_where({
+            "path": ["type"],
+            "operator": "Equal",
+            "valueString": "sentence"
+        })
+        .with_hybrid(
+            query=query,
+            vector=queryvector
+            )
+        .with_limit(10)
+        .do()
+    )
+    if initial_response:
+        relevant_sentences = initial_response['data']['Get']['Transcript']
+        return json.dumps({'relevant_sentences': [sentence['transcript'] for sentence in relevant_sentences]})
+    else:
+        return json.dumps({'relevant_sentences': ''})
+    
+def conversation_to_conversation_query(query):
+    queryvector = model.encode(query)
+    initial_response = (
+        client.query
+        .get("Transcript", ["transcript", "type", "conversation_id"])
+        .with_where({
+            "path": ["type"],
+            "operator": "Equal",
+            "valueString": "full"
+        })
+        .with_hybrid(
+            query=query,
+            vector=queryvector
+            )
+        .with_limit(10)
+        .do()
+    )
+    if initial_response:
+        conversation = initial_response['data']['Get']['Transcript'][0]['transcript']
+        return json.dumps({'conversation': conversation})
+    else:
+        return json.dumps({'conversation': ''})
