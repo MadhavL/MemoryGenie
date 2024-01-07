@@ -8,7 +8,8 @@ import Highlighter from "react-highlight-words";
 const URL = "http://127.0.0.1:8000" //https://neat-teeth-bet.loca.lt"; //NEED TO REPLACE WITH LOCALTUNNEL URL
 let socket
 let queryModeFlag = 0
-const CONVERSATION_END_TIME = 30000
+const CONVERSATION_END_TIME = 5000
+let savingEnabled = 0;
 
 function MyButton({recording, onClick}) {
     return (
@@ -23,6 +24,19 @@ function ConversationSwitch({onClick}) {
             type="switch"
             id="conversation-switch"
             label="See relevant conversations"
+            onClick={onClick}
+        />
+        </Form>
+    );
+}
+
+function SaveSwitch({onClick}) {
+    return (
+        <Form>
+        <Form.Check // prettier-ignore
+            type="switch"
+            id="save-switch"
+            label="Save conversations in database"
             onClick={onClick}
         />
         </Form>
@@ -87,13 +101,14 @@ function ConversationHighlighter({conversation, sentence, enabled}) {
 async function query_sentence_to_conversation (text){
     if (text) {
         try {
-            let request = await fetch(URL+ "/query-sentence-conversation/" + text, {
-                method: "get",
+            let request = await fetch(URL+ "/query-sentence-conversation/", {
+                method: "post",
                 headers: {
                     Accept: "application/json",
                     "Content-Type": "application/json",
                     "Bypass-Tunnel-Reminder": "anything",
-                }
+                },
+                body: JSON.stringify({query: text})
             });
             const jsonData = JSON.parse(await request.json());
             return jsonData
@@ -108,13 +123,14 @@ async function query_sentence_to_conversation (text){
 async function query_sentence_to_sentence (text){
     if (text) {
         try {
-            let request = await fetch(URL+ "/query-sentence-sentence/" + text, {
-                method: "get",
+            let request = await fetch(URL+ "/query-sentence-sentence/", {
+                method: "post",
                 headers: {
                     Accept: "application/json",
                     "Content-Type": "application/json",
                     "Bypass-Tunnel-Reminder": "anything",
-                }
+                },
+                body: JSON.stringify({query: text})
             });
             const jsonData = JSON.parse(await request.json());
             return jsonData
@@ -129,13 +145,14 @@ async function query_sentence_to_sentence (text){
 async function query_conversation_to_conversation (text){
     if (text) {
         try {
-            let request = await fetch(URL+ "/query-conversation-conversation/" + text, {
-                method: "get",
+            let request = await fetch(URL+ "/query-conversation-conversation/", {
+                method: "post",
                 headers: {
                     Accept: "application/json",
                     "Content-Type": "application/json",
                     "Bypass-Tunnel-Reminder": "anything",
-                }
+                },
+                body: JSON.stringify({query: text})
             });
             const jsonData = JSON.parse(await request.json());
             return jsonData
@@ -155,6 +172,7 @@ function App() {
     const [relevantConversation, setRelevantConversation] = useState("");
     const [relevantSentence, setRelevantSentence] = useState("");
     const [enabled, setEnabled] = useState(0);
+    // const [savingEnabled, setSavingEnabled] = useState(0);
     const [queryMode, setQueryMode] = useState(0);
     let prev = "";
     let prev_time = 0;
@@ -162,7 +180,9 @@ function App() {
     let conversation = "";
     let sentence = "";
     let prev_conversation = "";
+    let all_sentences = [];
     let prev_transcription_time = 0;
+    
 
     function buttonClick() {
         if (recording === 0) {
@@ -176,6 +196,11 @@ function App() {
 
     function switchToggled() {
         setEnabled((enabled + 1) % 2);
+    }
+
+    function saveSwitchToggled() {
+        // setSavingEnabled((savingEnabled + 1) % 2);
+        savingEnabled = (savingEnabled + 1) % 2;
     }
 
     function modeChange(event) {
@@ -261,6 +286,7 @@ function App() {
 
                     if (result.is_final) {
                         if (result.speech_final) {
+                            all_sentences.push(sentence)
                             prev_conversation += sentence
                             prev = ""
                             if (!transcription.match(/[\.!?]$/)) {
@@ -290,6 +316,14 @@ function App() {
                 track.stop();
               });
               console.log("Closed Microphone")
+              if (savingEnabled) {
+                console.log("Saving transcript")
+                //conversation
+                //sentences
+                // for (let sent of all_sentences) {
+
+                // }
+              }
             }
     
             socket.onerror = (error) => {
@@ -308,6 +342,7 @@ function App() {
         <div className="App">
             <TranscriptText transcriptText={transcriptText}/>
             <MyButton recording={recording} onClick={buttonClick}/>
+            <SaveSwitch onClick={saveSwitchToggled}/>
             <ConversationSwitch onClick={switchToggled}/>
             <QueryModeSelector onChange={modeChange} mode={queryMode}/>
             <ConversationHighlighter conversation={relevantConversation} sentence={relevantSentence} enabled={enabled}/>
