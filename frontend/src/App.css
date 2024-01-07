@@ -1,8 +1,33 @@
-.App {
+.Settings {
     background-color: #282c34;
     min-height: 100vh;
     display: flex;
     flex-direction: column;
+    align-items: start;
+    justify-content: center;
+    font-size: calc(10px + 1vmin);
+    color: white;
+    flex: 0.3;
+    padding-left: 2vmin;
+}
+
+.TextDisplay {
+    background-color: #282c34;
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    font-size: calc(10px + 2vmin);
+    color: white;
+    flex: 1;
+}
+
+.AppRow {
+    background-color: #282c34;
+    min-height: 100vh;
+    display: flex;
+    flex-direction: row;
     align-items: center;
     justify-content: center;
     font-size: calc(10px + 2vmin);
@@ -14,6 +39,17 @@
     margin-bottom: 4vmin;
     margin-left: 10vw;
     margin-right: 10vw;
+    flex: 0.4;
+    padding: 2vmin;
+    justify-content: start;
+}
+
+.HighlightedText {
+    margin-top: 4vmin;
+    margin-bottom: 4vmin;
+    margin-left: 10vw;
+    margin-right: 10vw;
+    flex: 1;
 }
 
 .HighlightedSentence {

@@ -13,7 +13,7 @@ class Query(BaseModel):
     query: str
 
 class Update(BaseModel):
-    text: str
+    text: list[str]  
     type: str
     id: str
 

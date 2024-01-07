@@ -13,7 +13,7 @@ let savingEnabled = 0;
 
 function MyButton({recording, onClick}) {
     return (
-      <Button onClick={onClick}>{recording === 0 ? "Start Recording": "Stop Recording"}</Button>
+      <Button style={{marginBottom:15}} onClick={onClick}>{recording === 0 ? "Start Recording": "Stop Recording"}</Button>
     );
   }
 
@@ -45,9 +45,10 @@ function SaveSwitch({onClick}) {
 
 function QueryModeSelector({onChange, mode}) {
     return (
-      <Form>
+      <Form style={{marginTop: 10}}>
+        Query Mode
         <Form.Check
-            inline
+            
             label="Sentence->Conversation"
             type="radio"
             name="group1"
@@ -57,7 +58,7 @@ function QueryModeSelector({onChange, mode}) {
             value={0}
         />
         <Form.Check
-            inline
+            
             label="Sentence->Sentence"
             type="radio"
             name="group1"
@@ -67,7 +68,7 @@ function QueryModeSelector({onChange, mode}) {
             value={1}
         />
         <Form.Check
-            inline
+            
             label="Conversation->Conversation"
             type="radio"
             name="group1"
@@ -89,7 +90,7 @@ function TranscriptText({transcriptText}) {
 function ConversationHighlighter({conversation, sentence, enabled}) {
     return(
     <Highlighter
-        className="TranscriptText"
+        className="HighlightedText"
         searchWords={[sentence]}
         autoEscape={true}
         textToHighlight={conversation}
@@ -343,10 +344,15 @@ function App() {
               if (savingEnabled) {
                 console.log("Saving transcript")
                 const conv_id = Date.now().toString();
-                update_db(conversation, "full", conv_id)
-                for (let sent of all_sentences) {
-                    update_db(sent, "sentence", conv_id)
+                if (conversation) {
+                    update_db([conversation], "full", conv_id)
                 }
+                
+                if (all_sentences) {
+                    update_db(all_sentences, "sentence", conv_id)
+                }
+                
+                
               }
             }
     
@@ -363,13 +369,18 @@ function App() {
     }
 
     return (
-        <div className="App">
-            <TranscriptText transcriptText={transcriptText}/>
-            <MyButton recording={recording} onClick={buttonClick}/>
-            <SaveSwitch onClick={saveSwitchToggled}/>
-            <ConversationSwitch onClick={switchToggled}/>
-            <QueryModeSelector onChange={modeChange} mode={queryMode}/>
-            <ConversationHighlighter conversation={relevantConversation} sentence={relevantSentence} enabled={enabled}/>
+        <div className='AppRow'>
+            <div className="Settings">
+                <MyButton recording={recording} onClick={buttonClick}/>
+                <SaveSwitch onClick={saveSwitchToggled}/>
+                <ConversationSwitch onClick={switchToggled}/>
+                <QueryModeSelector onChange={modeChange} mode={queryMode}/>
+            </div>
+            
+            <div className="TextDisplay">
+                <TranscriptText transcriptText={transcriptText}/>    
+                <ConversationHighlighter conversation={relevantConversation} sentence={relevantSentence} enabled={enabled}/>
+            </div>
         </div>
     );
 }
