@@ -4,15 +4,15 @@ import os
 import time
 
 #In the future, remove duplicates when adding to database
-weaviate_url= "https://memorygenie-iwdu90fy.weaviate.network" #muddy.tot
+WEAVIATE_URL= "https://memory-genie-2ib0f0rx.weaviate.network"
 
-weaviate_key = "j3MWdO2oqV1Dse4oHuOhVfSWftzkVOqev5LW"
+WEAVIATE_KEY = "kjSVPEXT3FwccyvwE0YLcuAiJjfp4QGGHIgi"
 
 model = SentenceTransformer('all-mpnet-base-v2')
 
 client = weaviate.Client(
-    url = weaviate_url,  # Replace with your endpoint
-    auth_client_secret=weaviate.AuthApiKey(api_key=weaviate_key),  # Replace w/ your Weaviate instance API key
+    url = WEAVIATE_URL,  # Replace with your endpoint
+    auth_client_secret=weaviate.AuthApiKey(api_key=WEAVIATE_KEY),  # Replace w/ your Weaviate instance API key
     timeout_config=500
 )
 

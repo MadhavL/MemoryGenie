@@ -8,7 +8,7 @@ import Highlighter from "react-highlight-words";
 const URL = "http://127.0.0.1:8000" //https://neat-teeth-bet.loca.lt"; //NEED TO REPLACE WITH LOCALTUNNEL URL
 let socket
 let queryModeFlag = 0
-const CONVERSATION_END_TIME = 30000
+const CONVERSATION_END_TIME = 15000
 let savingEnabled = 0;
 
 function MyButton({recording, onClick}) {
@@ -314,7 +314,7 @@ function App() {
                             all_sentences.push(sentence)
                             prev_conversation += sentence
                             prev = ""
-                            if (!transcription.match(/[\.!?]$/)) {
+                            if (!transcription.match(/[\.!,?]$/)) {
                                 prev_conversation += '.'
                             }
                             prev_conversation += " "                          
